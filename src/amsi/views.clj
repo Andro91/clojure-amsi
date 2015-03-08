@@ -7,7 +7,6 @@
   [title]
   [:head
    [:title title]
-   ;;(hic-p/include-css "//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css")
    (hic-p/include-css "/bootstrap.min.css")
    (hic-p/include-js "https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js")
    (hic-p/include-js "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js")
