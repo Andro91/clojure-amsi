@@ -7,8 +7,9 @@ Osnovna ideja je da se da predlog resenja za MillionSongDataset izazov (http://w
 
 UKRATKO:
 Dataset sadrzi podatke u formatu trojki [userid, songid, number]
-Prva dva su id korisnika, i id pesme u String formatu
-Poslednji element trojke je broj koji predstavlja koliko puta je korisnik odslusao datu pesmu
+Prva dva su id korisnika, i id pesme u String formatu;
+Poslednji element trojke je broj koji predstavlja koliko puta je korisnik odslusao datu pesmu;
+Poenta je da se na osnovu datih podataka napravi predvidjanje o tome koju ce pesmu sledecu korisnik poslusati.
 
 Uz projekat je dodata i baza u .rar arhivi (clojurebase[DATUM-IZMENE].rar)
 U arhivi se nalazi sql DUMP fajl, koji je izvucen (exported) u MySql Workbench, i predstavlja identicnu kopiju baze na mom lokalnom racunaru
