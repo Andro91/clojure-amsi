@@ -6,7 +6,7 @@
                  [compojure "1.3.1"]
                  [ring/ring-defaults "0.1.2"]
                  [hiccup "1.0.2"]
-                 [org.clojure/java.jdbc "0.2.3"]
+                 [org.clojure/java.jdbc "0.3.6"]
                  [mysql/mysql-connector-java "5.1.6"]
                  [cljs-ajax "0.3.10"]]
   :plugins [[lein-ring "0.8.13"]]
