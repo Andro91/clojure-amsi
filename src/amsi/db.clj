@@ -11,14 +11,48 @@
 
 
 (defn list-users
-  "Funkcija koja izlistava sve korisnike u bazi"
+  "Returns a list of all the users from the database"
   []
   (let [results (sql/query db
       ["select * from triplets LIMIT 1000"])]
     results))
 
+(defn check-similarity
+  "Returns a similarity quoeficient between two users (UNDER CONSTRUCTION)"
+  [user1 user2]
+  (def rez
+  (sql/query db ["SELECT * FROM triplets WHERE iduser like ?" user1]))
+  (def rez2
+  (sql/query db [(str "SELECT * FROM triplets WHERE idsong
+                  IN (SELECT idsong FROM triplets WHERE iduser like '" user1 "')
+                  AND iduser = '" user2 "'")]))
+  ;;(println rez)
+  ;;(println rez2)
+  (def praznaLista (atom []))
+  (doseq [item2 rez2]
+    (doseq [item1 rez]
+       (do
+         (if (= (item2 :idsong) (item1 :idsong))
+           (swap! praznaLista conj (Math/abs (- (double (item2 :norm)) (double (item1 :norm)))) )
+           ;;(def var nil)
+           )
+         ))
+    )
+  (prn "lista: ")
+  (prn praznaLista)
+  (if (> (count @praznaLista) 0)
+    (do
+      (def similarity (/ (reduce + @praznaLista) (count @praznaLista)))
+      (prn (str "similarnosr je " similarity))
+      (/ 1 (+ 1 similarity))
+      )
+    0
+  )
+  )
+
+
 (defn list-similar-users
-  "Funkcija koja vraca HTML5 tabelu koja sadrzi korisnike koji su slusali iste pesme kao dati korisnik"
+  "Returns users similar to the input user, based on the number of occurences of a song being heard by both users"
   [iduser]
   (let [results-similar
     (sql/query db
@@ -29,14 +63,14 @@
       )]
     (hic-p/html5
      [:table {:class "table"}
-      [:tr [:th "user"] [:th "number of same songs"]]
+      [:tr [:th "user"] [:th "number of same songs"] [:th "similarity quoeficient"]]
       (for [loc results-similar]
-       [:tr [:td (:iduser loc)] [:td (:expr loc)]])]
+       [:tr [:td (:iduser loc)] [:td (:expr loc)] [:td (check-similarity (iduser :iduser) (:iduser loc))]])]
      )))
 
 
 (defn list-user-songs
-  "Spisak svih pesama koje je dati korisnik odslusao, u formatu HTML5 tabele"
+  "Returns an HTML table, populated with songs listened to by the input user"
   [iduser]
   (let [results
     (sql/query db
@@ -54,27 +88,7 @@
      )))
 
 
-(defn check-similarity
-  "Funkcija za proveru slicnosti izmedju dva korisnika (UNDER CONSTRUCTION)"
-  [user1 user2]
-  (def rez
-  (sql/query db ["SELECT * FROM triplets WHERE iduser like ?" user1]))
-  (def rez2
-  (sql/query db [(str "SELECT * FROM triplets WHERE idsong
-                  IN (SELECT idsong FROM triplets WHERE iduser like '" user1 "')
-                  AND iduser = '" user2 "'")]))
-  (println rez)
-  (println rez2)
-  (def praznaLista (atom []))
-  (doseq [ item2 rez2 ] (doseq [item1 rez] (do (if (= (item2 :idsong) (item1 :idsong)) (swap! praznaLista conj (- (bigdec (item2 :number)) (bigdec (item1 :number))) ) (def var nil)) (prn praznaLista) ))
-  )
-  (prn praznaLista)
-  (def similarity (/ (reduce + @praznaLista) (count @praznaLista)))
-  similarity
-  )
-
-
 ;;test poziv funkcija
-(check-similarity "fd50c4007b68a3737fe052d5a4f78ce8aa117f3d" "ed23fb14028d9afe701806ebdcd4e2a2cc5b3d16")
+(check-similarity "d7083f5e1d50c264277d624340edaaf3dc16095b" "a5b450f2fcfd35184b1ebde5be09ef931e630522")
 
-(list-user-songs {:iduser "fd50c4007b68a3737fe052d5a4f78ce8aa117f3d"})
+;;(list-user-songs {:iduser "fd50c4007b68a3737fe052d5a4f78ce8aa117f3d"})

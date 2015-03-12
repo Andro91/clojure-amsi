@@ -4,6 +4,7 @@
             [hiccup.page :as hic-p]))
 
 (defn gen-page-head
+  "Generates page headers"
   [title]
   [:head
    [:title title]
@@ -14,6 +15,7 @@
    ])
 
 (def navbar
+  "Generates a navbar"
   [:nav {:class "navbar navbar-default navbar-fixed-top"}
    [:div {:class "container"}
    [:div {:class "navbar-header"}
@@ -31,6 +33,7 @@
 
 
 (defn home-page
+  "Generates the home page content"
   []
   (hic-p/html5
    (gen-page-head "Home")
@@ -39,7 +42,10 @@
    [:h1 "Home"]
    [:p "Wellcome to Clojure web app. Further description to follow."]]))
 
+
+
 (defn select-user-page
+  "Generates the single user page view"
   []
   (hic-p/html5
    (gen-page-head "Select a USER")
@@ -66,24 +72,12 @@
                         [:div {:class "wBall" :id "wBall_5"}
                          [:div {:class "wInnerBall"}]]
                         ]]]
-    [:script
-     (str "$('div#submituser').click(function(){
-            var data = $('input#iduser').val();
-            $.ajax({
-                url: 'ajaxcall',
-                type: 'POST',
-                data: {iduser: data},
-                beforeSend: function(){
-                   $('div#loaderdiv').show();
-                },
-                success: function(result){
-                $('div#loaderdiv').hide();
-                $('#div1').html(result);
-                }});
-    });")]))
+    (hic-p/include-js "/ajax.js")
+     ))
 
 
 (defn all-users-page
+  "Genearates the content for the all users view page"
   []
   (let [all-locs (db/list-users)]
     (hic-p/html5
