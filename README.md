@@ -1,33 +1,33 @@
 # amsi
 
-Projekat za predmet Alati i Metode Softverskog Inzenjerstva (AMSI)
-Radjen u Clojure programskom jeziku (verzija 1.6.0) u razvojnom okruzenju LightTable
+Software Engineering Tools and Methods Class Project
+Developed in the Clojure programming language (version 1.6.0) in the LightTable IDE
 
-Osnovna ideja je da se da predlog resenja za MillionSongDataset izazov (http://www.kaggle.com/c/msdchallenge)
+The original idea was to propose a solution to the MillionSongDataset challenge (http://www.kaggle.com/c/msdchallenge)
 
-UKRATKO:
-Dataset sadrzi podatke u formatu trojki [userid, songid, number]
-Prva dva su id korisnika, i id pesme u String formatu;
-Poslednji element trojke je broj koji predstavlja koliko puta je korisnik odslusao datu pesmu;
-Poenta je da se na osnovu datih podataka napravi predvidjanje o tome koju ce pesmu sledecu korisnik poslusati.
+SUMMRARU:
+Dataset data in the form of triplets [userid, songid, number]
+The first two are the id of a user, and the id of a song, both strings;
+The last part of a triplet is the number of times the user has listened to a given song;
+The goal is to make a prediction on what the next song a users listens to will be, based on the data provided.
 
-Uz projekat je dodata i baza u .rar arhivi (clojurebase[DATUM-IZMENE].rar)
-U arhivi se nalazi sql DUMP fajl, koji je izvucen (exported) u MySql Workbench, i predstavlja identicnu kopiju baze na mom lokalnom racunaru
-Potrebno je bazu uvesti (import) bazu na lokalni server (Preporuka WAMP, uz koriscenje MySql Workbench)
+The database used in the project is present in an .rar archive format (clojurebase[UPDATE-DATE].rar)
+The archive contains the sql DUMP file, exported via the MySQL Workbench utility, which is an exact copy of the database used in development.
+The database needs to be imported to the local server (Personal tool of choice: WAMP) prior to running the application.
 
-## Pred-zahtevi
+## Requirements
 
-Potreban je [Leiningen][] 2.0.0 ili noviji.
+The app requires [Leiningen] 2.0.0 or later
 
 [leiningen]: https://github.com/technomancy/leiningen
 
-## Pokretanje
+## Running
 
-Za pokretanje web servera za aplikaciju, potrebno je u terminalu,
-u radnom direktorijumu u kom se nalazi verzija aplikacije, izvrsiti komandu:
+Running the application requires the local ring server to be started,
+by executing the following command in the current working directory (project folder)
+of the application.
 
     lein ring server
 
-Po uspesno izvrsenoj komandi, podize se server na (po default-u) portu 3000
-
-Aplikaciji se zatim moze pristupiti na http://localhost:3000/
+If the command is successfully executed, the ring server should be up and running on port 3000 (by default)
+The app can then be viewed on http://localhost:3000/

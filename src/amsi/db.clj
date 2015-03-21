@@ -10,6 +10,8 @@
          :password ""})
 
 
+(def UserList (atom []))
+
 (defn list-users
   "Returns a list of all the users from the database"
   []
@@ -28,26 +30,30 @@
                   AND iduser = '" user2 "'")]))
   ;;(println rez)
   ;;(println rez2)
-  (def praznaLista (atom []))
+  (def tempList (atom []))
   (doseq [item2 rez2]
     (doseq [item1 rez]
        (do
          (if (= (item2 :idsong) (item1 :idsong))
-           (swap! praznaLista conj (Math/abs (- (double (item2 :norm)) (double (item1 :norm)))) )
+           (swap! tempList conj (Math/abs (- (double (item2 :norm)) (double (item1 :norm)))) )
            ;;(def var nil)
            )
          ))
     )
-  (prn "lista: ")
-  (prn praznaLista)
-  (if (> (count @praznaLista) 0)
+  (if (> (count @tempList) 0)
     (do
-      (def similarity (/ (reduce + @praznaLista) (count @praznaLista)))
-      (prn (str "similarnosr je " similarity))
+      (def similarity (/ (reduce + @tempList) (count @tempList)))
+      ;;(prn (str "similarnosr je " similarity))
       (/ 1 (+ 1 similarity))
       )
     0
   )
+  )
+
+(defn users-by-similarity
+  "insert description"
+  [user]
+  ;;(prn UserList)
   )
 
 
@@ -58,14 +64,18 @@
     (sql/query db
       [(str "SELECT DISTINCT iduser, count(idsong) as expr
             FROM triplets
-            WHERE idsong IN (SELECT idsong FROM triplets WHERE iduser like '" (iduser :iduser) "')
-            AND iduser NOT LIKE '" (iduser :iduser) "' GROUP BY iduser ORDER BY expr DESC LIMIT 10")]
+            WHERE idsong IN (SELECT idsong FROM triplets WHERE iduser like '" iduser "')
+            AND iduser NOT LIKE '" iduser "' GROUP BY iduser ORDER BY expr DESC LIMIT 10")]
       )]
+    ;;(swap! UserList conj results-similar)
+    (doseq [item results-similar] (swap! UserList conj (assoc item :similarity (check-similarity iduser (:iduser item)))))
+    ;;(swap! UserList conj results-similar)
+    (prn UserList)
     (hic-p/html5
      [:table {:class "table"}
       [:tr [:th "user"] [:th "number of same songs"] [:th "similarity quoeficient"]]
-      (for [loc results-similar]
-       [:tr [:td (:iduser loc)] [:td (:expr loc)] [:td (check-similarity (iduser :iduser) (:iduser loc))]])]
+      (for [item results-similar]
+       [:tr [:td (:iduser item)] [:td (:expr item)] [:td (check-similarity iduser (:iduser item))]])]
      )))
 
 
@@ -84,11 +94,11 @@
        [:tr [:td (:iduser loc)] [:td (:idsong loc)] [:td (:number loc)] [:td (:norm loc)]])]
      [:br]
      [:h2 "Similar users by songs"]
-     (list-similar-users iduser)
+     (list-similar-users (iduser :iduser))
      )))
 
-
 ;;test poziv funkcija
-(check-similarity "d7083f5e1d50c264277d624340edaaf3dc16095b" "a5b450f2fcfd35184b1ebde5be09ef931e630522")
-
+;;(check-similarity "d7083f5e1d50c264277d624340edaaf3dc16095b" "a5b450f2fcfd35184b1ebde5be09ef931e630522")
+;;(list-similar-users "d7083f5e1d50c264277d624340edaaf3dc16095b")
+;;(users-by-similarity "d7083f5e1d50c264277d624340edaaf3dc16095b")
 ;;(list-user-songs {:iduser "fd50c4007b68a3737fe052d5a4f78ce8aa117f3d"})
