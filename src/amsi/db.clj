@@ -10,7 +10,8 @@
          :password ""})
 
 
-(def UserList (atom []))
+(def userList (atom []))
+(def recommendedSongList (atom []))
 
 (defn list-users
   "Returns a list of all the users from the database"
@@ -19,42 +20,53 @@
       ["select * from triplets LIMIT 1000"])]
     results))
 
+
 (defn check-similarity
-  "Returns a similarity quoeficient between two users (UNDER CONSTRUCTION)"
+  "Returns a similarity quoeficient between two users"
   [user1 user2]
-  (def rez
+  (def resultset1
   (sql/query db ["SELECT * FROM triplets WHERE iduser like ?" user1]))
-  (def rez2
+  (def resultset2
   (sql/query db [(str "SELECT * FROM triplets WHERE idsong
                   IN (SELECT idsong FROM triplets WHERE iduser like '" user1 "')
                   AND iduser = '" user2 "'")]))
-  ;;(println rez)
-  ;;(println rez2)
   (def tempList (atom []))
-  (doseq [item2 rez2]
-    (doseq [item1 rez]
+  (doseq [item2 resultset1]
+    (doseq [item1 resultset2]
        (do
          (if (= (item2 :idsong) (item1 :idsong))
            (swap! tempList conj (Math/abs (- (double (item2 :norm)) (double (item1 :norm)))) )
-           ;;(def var nil)
-           )
-         ))
-    )
+           ))))
   (if (> (count @tempList) 0)
     (do
       (def similarity (/ (reduce + @tempList) (count @tempList)))
-      ;;(prn (str "similarnosr je " similarity))
-      (/ 1 (+ 1 similarity))
-      )
-    0
-  )
+      (/ 1 (+ 1 similarity)))
+    0))
+
+
+(defn recommended-songs
+  "insert description"
+  []
+  (doseq [item @userList]
+    (def recSong
+        (sql/query db [(str "SELECT idsong FROM triplets WHERE iduser = '" (item :iduser) "'
+                        AND number = (SELECT max(number) FROM triplets WHERE iduser = '" (item :iduser) "') LIMIT 1")]))
+    (swap! recommendedSongList conj (assoc (first recSong) :similarity (:similarity item)))
+    )
+  (def tList (atom []))
+  (doseq [i @recommendedSongList]
+    (swap! tList conj (assoc i :score (* (:similarity i) ((frequencies @recommendedSongList) i))))
+    )
+  (reverse (sort-by :score (distinct @tList)))
   )
 
-(defn users-by-similarity
-  "insert description"
-  [user]
-  ;;(prn UserList)
-  )
+;;test function call
+;;(prn userList)
+;;(count @userList)
+;;(prn recommendedSongList)
+;;(count @recommendedSongList)
+;;(count (distinct @recommendedSongList))
+;;(recommended-songs)
 
 
 (defn list-similar-users
@@ -67,10 +79,7 @@
             WHERE idsong IN (SELECT idsong FROM triplets WHERE iduser like '" iduser "')
             AND iduser NOT LIKE '" iduser "' GROUP BY iduser ORDER BY expr DESC LIMIT 10")]
       )]
-    ;;(swap! UserList conj results-similar)
-    (doseq [item results-similar] (swap! UserList conj (assoc item :similarity (check-similarity iduser (:iduser item)))))
-    ;;(swap! UserList conj results-similar)
-    (prn UserList)
+    (doseq [item results-similar] (swap! userList conj (assoc item :similarity (check-similarity iduser (:iduser item)))))
     (hic-p/html5
      [:table {:class "table"}
       [:tr [:th "user"] [:th "number of same songs"] [:th "similarity quoeficient"]]
@@ -97,8 +106,7 @@
      (list-similar-users (iduser :iduser))
      )))
 
-;;test poziv funkcija
+;;test function call
 ;;(check-similarity "d7083f5e1d50c264277d624340edaaf3dc16095b" "a5b450f2fcfd35184b1ebde5be09ef931e630522")
 ;;(list-similar-users "d7083f5e1d50c264277d624340edaaf3dc16095b")
-;;(users-by-similarity "d7083f5e1d50c264277d624340edaaf3dc16095b")
 ;;(list-user-songs {:iduser "fd50c4007b68a3737fe052d5a4f78ce8aa117f3d"})

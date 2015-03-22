@@ -5,7 +5,7 @@ Developed in the Clojure programming language (version 1.6.0) in the LightTable 
 
 The original idea was to propose a solution to the MillionSongDataset challenge (http://www.kaggle.com/c/msdchallenge)
 
-SUMMRARU:
+SUMMARY:
 Dataset data in the form of triplets [userid, songid, number]
 The first two are the id of a user, and the id of a song, both strings;
 The last part of a triplet is the number of times the user has listened to a given song;
