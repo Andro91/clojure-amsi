@@ -10,8 +10,6 @@
          :password ""})
 
 
-(def userList (atom []))
-(def recommendedSongList (atom []))
 
 (defn list-users
   "Returns a list of all the users from the database"
@@ -45,8 +43,9 @@
 
 
 (defn recommended-songs
-  "insert description"
-  []
+  "Creates a list of songs recommended for the user"
+  [userList]
+  (def recommendedSongList (atom []))
   (doseq [item @userList]
     (def recSong
         (sql/query db [(str "SELECT idsong FROM triplets WHERE iduser = '" (item :iduser) "'
@@ -54,6 +53,7 @@
     (swap! recommendedSongList conj (assoc (first recSong) :similarity (:similarity item)))
     )
   (def tList (atom []))
+  (prn @recommendedSongList)
   (doseq [i @recommendedSongList]
     (swap! tList conj (assoc i :score (* (:similarity i) ((frequencies @recommendedSongList) i))))
     )
@@ -79,14 +79,43 @@
             WHERE idsong IN (SELECT idsong FROM triplets WHERE iduser like '" iduser "')
             AND iduser NOT LIKE '" iduser "' GROUP BY iduser ORDER BY expr DESC LIMIT 10")]
       )]
+    (prn results-similar)
+    ;;(doseq [item results-similar] (swap! userList conj (assoc item :similarity (check-similarity iduser (:iduser item)))))
+    (def userList (atom []))
     (doseq [item results-similar] (swap! userList conj (assoc item :similarity (check-similarity iduser (:iduser item)))))
-    (hic-p/html5
+    userList
+    ))
+
+(defn list-user-songs-HTML
+  [users]
+  (hic-p/html5
+     [:h2 "Songs listened to by the user"]
+     [:table {:class "table"}
+      [:tr [:th "user"] [:th "song"] [:th "number of time listened"] [:th "normalization"]]
+      (for [l users]
+       [:tr [:td (:iduser l)] [:td (:idsong l)] [:td (:number l)] [:td (:norm l)]])]
+     [:br]
+  ))
+
+(defn list-similar-users-HTML
+  [userList]
+  (hic-p/html5
+     [:h2 "Similar users by songs"]
      [:table {:class "table"}
       [:tr [:th "user"] [:th "number of same songs"] [:th "similarity quoeficient"]]
-      (for [item results-similar]
-       [:tr [:td (:iduser item)] [:td (:expr item)] [:td (check-similarity iduser (:iduser item))]])]
-     )))
+      (for [item @userList]
+       [:tr [:td (:iduser item)] [:td (:expr item)] [:td (:similarity item)]])]
+     ))
 
+(defn recommended-songs-HTML
+  [songList]
+  (hic-p/html5
+    [:h2 "Recommended songs"]
+     [:table {:class "table"}
+      [:tr [:th "song"] [:th "score"]]
+      (for [item songList]
+       [:tr [:td (:idsong item)] [:td (:score item)]])]
+  ))
 
 (defn list-user-songs
   "Returns an HTML table, populated with songs listened to by the input user"
@@ -95,18 +124,21 @@
     (sql/query db
       [(str "select * from triplets WHERE iduser = '" (iduser :iduser) "'")]
       )]
-    (hic-p/html5
-     [:h2 "Songs listened to by the user"]
-     [:table {:class "table"}
-      [:tr [:th "user"] [:th "song"] [:th "number of time listened"] [:th "normalization"]]
-      (for [loc results]
-       [:tr [:td (:iduser loc)] [:td (:idsong loc)] [:td (:number loc)] [:td (:norm loc)]])]
-     [:br]
-     [:h2 "Similar users by songs"]
-     (list-similar-users (iduser :iduser))
-     )))
+  (def AtomList (list-similar-users (iduser :iduser)))
+  (str
+  (list-user-songs-HTML results)
+  (list-similar-users-HTML AtomList)
+  (recommended-songs-HTML (recommended-songs AtomList)))
+     ;;[:h2 "Similar users by songs"]
+     ;;(list-similar-users (iduser :iduser))
+     ;;[:h2 "Recommended songs"]
+     ;;(recommended-songs)
+     ))
 
 ;;test function call
 ;;(check-similarity "d7083f5e1d50c264277d624340edaaf3dc16095b" "a5b450f2fcfd35184b1ebde5be09ef931e630522")
 ;;(list-similar-users "d7083f5e1d50c264277d624340edaaf3dc16095b")
 ;;(list-user-songs {:iduser "fd50c4007b68a3737fe052d5a4f78ce8aa117f3d"})
+(def AtomList (list-similar-users "fd50c4007b68a3737fe052d5a4f78ce8aa117f3d"))
+(prn AtomList)
+(recommended-songs AtomList)

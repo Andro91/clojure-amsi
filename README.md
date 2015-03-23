@@ -5,19 +5,31 @@ Developed in the Clojure programming language (version 1.6.0) in the LightTable 
 
 The original idea was to propose a solution to the MillionSongDataset challenge (http://www.kaggle.com/c/msdchallenge)
 
-SUMMARY:
+### SUMMARY:
 Dataset data in the form of triplets [userid, songid, number]
 The first two are the id of a user, and the id of a song, both strings;
 The last part of a triplet is the number of times the user has listened to a given song;
 The goal is to make a prediction on what the next song a users listens to will be, based on the data provided.
 
+### NORMALISATION
+Since the number of times a user can listen to a song can be virtually limitless, a normalisation method 
+(feature scaling) is used in order to have the data range between two values 
+(5 and 10, 10 being the highest user appeal for a song).
+
 The database used in the project is present in an .rar archive format (clojurebase[UPDATE-DATE].rar)
 The archive contains the sql DUMP file, exported via the MySQL Workbench utility, which is an exact copy of the database used in development.
 The database needs to be imported to the local server (Personal tool of choice: WAMP) prior to running the application.
 
+## User manual
+Home page is meant to contain the instructions for using the application, but it's still incomplete.
+The "select user" page is the main part of the application. The textbox expects a userid as an input, and after submiting the id,
+the system evaluates the user, and recommends songs for him to listen to. The output is ina the form of three tables, first being 
+the list of songs the user has listened to, second, the list of similar users, and finally, the list of system-recommended songs.
+The "all users" page displays the triplets from the database, limited to the first 1000 records (for processing purposes).
+
 ## Requirements
 
-The app requires [Leiningen] 2.0.0 or later
+The application requires [Leiningen] 2.0.0 or later
 
 [leiningen]: https://github.com/technomancy/leiningen
 
