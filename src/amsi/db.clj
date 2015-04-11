@@ -3,11 +3,17 @@
             [hiccup.page :as hic-p]))
 
 
-(def db {:classname "com.mysql.jdbc.Driver"
-         :subprotocol "mysql"
-         :subname "//localhost:3306/clojurebase"
-         :user "root"
-         :password ""})
+;;(def db {:classname "com.mysql.jdbc.Driver"
+;;         :subprotocol "mysql"
+;;         :subname "//localhost:3306/clojurebase"
+;;         :user "root"
+;;         :password ""})
+
+(def db
+  {:classname   "org.sqlite.JDBC"
+   :subprotocol "sqlite"
+   :subname     "clojure.db"
+   })
 
 
 
@@ -124,7 +130,7 @@
     (sql/query db
       [(str "select * from triplets WHERE iduser = '" (iduser :iduser) "'")]
       )]
-  (def AtomList (list-similar-users (iduser :iduser)))
+  (future (def AtomList (list-similar-users (iduser :iduser))))
   (str
   (list-user-songs-HTML results)
   (list-similar-users-HTML AtomList)

@@ -4,7 +4,6 @@
             [amsi.db :as db]
             [compojure.route :as route]
             [compojure.handler :as handler]
-            ;;[ajax.core :as ajax]
             ))
 
 (defroutes app-routes

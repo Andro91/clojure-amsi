@@ -16,16 +16,15 @@ Since the number of times a user can listen to a song can be virtually limitless
 (feature scaling) is used in order to have the data range between two values 
 (5 and 10, 10 being the highest user appeal for a song).
 
-The database used in the project is present in an .rar archive format (clojurebase[UPDATE-DATE].rar)
-The archive contains the sql DUMP file, exported via the MySQL Workbench utility, which is an exact copy of the database used in development.
-The database needs to be imported to the local server (Personal tool of choice: WAMP) prior to running the application.
+The database used in the project is present in an .rar archive format (clojure.rar)
+The archive contains the SQLLite database.
 
 ## User manual
-* Home page is meant to contain the instructions for using the application, but it's still incomplete.
-* The "select user" page is the main part of the application. The textbox expects a userid as an input, and after submiting the id,
+Home page is meant to contain the instructions for using the application, but it's still incomplete.
+The "select user" page is the main part of the application. The textbox expects a userid as an input, and after submiting the id,
 the system evaluates the user, and recommends songs for him to listen to. The output is ina the form of three tables, first being 
 the list of songs the user has listened to, second, the list of similar users, and finally, the list of system-recommended songs.
-* The "all users" page displays the triplets from the database, limited to the first 1000 records (for processing purposes).
+The "all users" page displays the triplets from the database, limited to the first 1000 records (for processing purposes).
 
 ## Requirements
 

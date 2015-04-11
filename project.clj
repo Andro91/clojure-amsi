@@ -8,7 +8,7 @@
                  [hiccup "1.0.2"]
                  [org.clojure/java.jdbc "0.3.6"]
                  [mysql/mysql-connector-java "5.1.6"]
-                 [cljs-ajax "0.3.10"]]
+                 [org.xerial/sqlite-jdbc "3.7.2"]]
   :plugins [[lein-ring "0.8.13"]]
   :ring {:handler amsi.handler/app}
   :profiles
