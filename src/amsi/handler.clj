@@ -3,8 +3,7 @@
             [amsi.views :as views]
             [amsi.db :as db]
             [compojure.route :as route]
-            [compojure.handler :as handler]
-            ))
+            [compojure.handler :as handler]))
 
 (defroutes app-routes
   (GET "/"

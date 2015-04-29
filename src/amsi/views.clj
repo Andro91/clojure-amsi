@@ -11,8 +11,7 @@
    (hic-p/include-css "/bootstrap.min.css")
    (hic-p/include-js "https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js")
    (hic-p/include-js "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js")
-   (hic-p/include-css "/style.css")
-   ])
+   (hic-p/include-css "/style.css")])
 
 (def navbar
   "Generates a navbar"
@@ -40,7 +39,7 @@
    navbar
    [:div {:class "container"}
    [:h1 "Home"]
-   [:p "Wellcome to Clojure web app. Further description to follow."]]))
+   [:p "Wellcome to Clojure web app. Consult the README for more details."]]))
 
 
 
@@ -72,8 +71,7 @@
                         [:div {:class "wBall" :id "wBall_5"}
                          [:div {:class "wInnerBall"}]]
                         ]]]
-    (hic-p/include-js "/ajax.js")
-     ))
+    (hic-p/include-js "/ajax.js")))
 
 
 (defn all-users-page
@@ -89,3 +87,36 @@
       [:tr [:th "user"] [:th "song"] [:th "number of time listened"] [:th "normalization"]]
       (for [loc all-locs]
         [:tr [:td (:iduser loc)] [:td (:idsong loc)] [:td (:number loc)] [:td (:norm loc)]])]])))
+
+
+(defn list-user-songs-HTML
+  [users]
+  (hic-p/html5
+   [:h2 "Songs listened to by the user"]
+   [:table {:class "table"}
+    [:tr [:th "user"] [:th "song"] [:th "number of time listened"] [:th "normalization"]]
+    (for [l users]
+      [:tr [:td (:iduser l)] [:td (:idsong l)] [:td (:number l)] [:td (:norm l)]])]
+   [:br]))
+
+
+(defn list-similar-users-HTML
+  [user-list]
+  (hic-p/html5
+   [:h2 "Similar users by songs"]
+   [:table {:class "table"}
+    [:tr [:th "user"] [:th "number of same songs"] [:th "similarity quoeficient"]]
+    (for [item user-list]
+      [:tr [:td (:iduser item)] [:td (:expr item)] [:td (:similarity item)]])]))
+
+
+(defn recommended-songs-HTML
+  [song-list]
+  (hic-p/html5
+   [:h2 "Recommended songs"]
+   [:table {:class "table"}
+    [:tr [:th "song"] [:th "score"]]
+    (for [item song-list]
+      [:tr [:td (:idsong item)] [:td (:score item)]])]))
+
+
