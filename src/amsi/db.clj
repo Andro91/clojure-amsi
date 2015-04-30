@@ -24,7 +24,9 @@
                         IN (SELECT idsong FROM triplets WHERE iduser like '" user1 "')
                         AND iduser = '" user2 "'")])
         let-list (for [item2 resultset1 :let [y (for [item1 resultset2 :let [z (Math/abs (- (double (:norm item2)) (double (:norm item1))))]
-                                                                   :when (= (item2 :idsong) (item1 :idsong))] z)]] y)]
+                                                                       :when (= (item2 :idsong) (item1 :idsong))]
+                                                  z)]]
+                   y)]
   (if (pos? (count let-list))
       (/ 1 (inc (/ (reduce + (flatten let-list)) (count let-list))))
       0)))
@@ -37,7 +39,8 @@
                                                                     AND number = (SELECT max(number) FROM triplets WHERE iduser = '" (:iduser item) "') LIMIT 1")])
                                             y (assoc (first results) :similarity (:similarity item))]]
                   y)]
-  (reverse (sort-by :score (distinct (for [i let-list :let [z (assoc i :score (* (:similarity i) ((frequencies let-list) i)))]] z))))))
+  (reverse (sort-by :score (distinct (for [i let-list :let [z (assoc i :score (* (:similarity i) ((frequencies let-list) i)))]]
+                                       z))))))
 
 
 (defn list-similar-users
@@ -49,7 +52,8 @@
                          FROM triplets
                          WHERE idsong IN (SELECT idsong FROM triplets WHERE iduser like '" iduser "')
                          AND iduser NOT LIKE '" iduser "' GROUP BY iduser ORDER BY expr DESC LIMIT 10")])]
-    (for [x results :let [y (assoc x :similarity (check-similarity iduser (:iduser x)))]] y)))
+    (for [x results :let [y (assoc x :similarity (check-similarity iduser (:iduser x)))]]
+      y)))
 
 
 (defn list-user-songs
