@@ -8,8 +8,11 @@
                  [hiccup "1.0.2"]
                  [org.clojure/java.jdbc "0.3.6"]
                  [mysql/mysql-connector-java "5.1.6"]
-                 [org.xerial/sqlite-jdbc "3.7.2"]]
-  :plugins [[lein-ring "0.8.13"]]
+                 [org.xerial/sqlite-jdbc "3.7.2"]
+                 [criterium "0.4.3"]]
+  :plugins [[lein-ring "0.8.13"]
+            [lein-kibit "0.1.2"]
+            [lein-midje "3.1.3"]]
   :ring {:handler amsi.handler/app}
   :profiles
   {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]

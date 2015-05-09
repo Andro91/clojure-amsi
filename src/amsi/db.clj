@@ -1,7 +1,6 @@
 (ns amsi.db
   (:require [clojure.java.jdbc :as sql]
-            [hiccup.page :as hic-p]
-            [amsi.views :as views]))
+            [hiccup.page :as hic-p]))
 
 
 (def db
@@ -16,6 +15,18 @@
   (sql/query db ["select * from triplets LIMIT 1000"]))
 
 
+(defn select-specific-user
+  "Returns records related to the input user"
+  [iduser]
+  (sql/query db [(str "select * from triplets WHERE iduser = '" iduser "'")]))
+
+
+(defn ^double sub-primitives
+  "Find absolute distance between two numbers as primitives"
+  [^double num1 ^double num2]
+  (Math/abs (- num1 num2)))
+
+
 (defn check-similarity
   "Returns a similarity quoeficient between two users"
   [user1 user2]
@@ -23,7 +34,7 @@
         resultset2 (sql/query db [(str "SELECT * FROM triplets WHERE idsong
                         IN (SELECT idsong FROM triplets WHERE iduser like '" user1 "')
                         AND iduser = '" user2 "'")])
-        let-list (for [item2 resultset1 :let [y (for [item1 resultset2 :let [z (Math/abs (- (double (:norm item2)) (double (:norm item1))))]
+        let-list (for [item2 resultset1 :let [y (for [item1 resultset2 :let [z (sub-primitives (:norm item2) (:norm item1))]
                                                                        :when (= (item2 :idsong) (item1 :idsong))]
                                                   z)]]
                    y)]
@@ -54,14 +65,3 @@
                          AND iduser NOT LIKE '" iduser "' GROUP BY iduser ORDER BY expr DESC LIMIT 10")])]
     (for [x results :let [y (assoc x :similarity (check-similarity iduser (:iduser x)))]]
       y)))
-
-
-(defn list-user-songs
-  "Returns an HTML table, populated with songs listened to by the input user"
-  [iduser]
-  (let [results (sql/query db [(str "select * from triplets WHERE iduser = '" (iduser :iduser) "'")])
-        my-list (list-similar-users (iduser :iduser))]
-    (str
-     (views/list-user-songs-HTML results)
-     (views/list-similar-users-HTML my-list)
-     (views/recommended-songs-HTML (recommended-songs my-list)))))

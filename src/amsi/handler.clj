@@ -17,7 +17,7 @@
        (views/select-user-page))
   (POST "/ajaxcall"
         {params :params}
-        (db/list-user-songs params))
+        (views/list-user-songs params))
   (route/resources "/")
   (route/not-found "Not Found"))
 

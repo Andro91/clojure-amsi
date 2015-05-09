@@ -120,3 +120,12 @@
       [:tr [:td (:idsong item)] [:td (:score item)]])]))
 
 
+(defn list-user-songs
+  "Returns an HTML table, populated with songs listened to by the input user"
+  [iduser]
+  (let [results (db/select-specific-user (iduser :iduser))
+        my-list (db/list-similar-users (iduser :iduser))]
+    (str
+     (list-user-songs-HTML results)
+     (list-similar-users-HTML my-list)
+     (recommended-songs-HTML (db/recommended-songs my-list)))))
