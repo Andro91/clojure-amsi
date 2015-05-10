@@ -46,12 +46,24 @@
 (defn recommended-songs
   "Creates a list of songs recommended for the user"
   [user-list]
-  (let [let-list (for [item user-list :let [results (sql/query db [(str "SELECT idsong FROM triplets WHERE iduser = '" (:iduser item) "'
+  (let [let-list (for [item user-list :let [results (sql/query db [(str "SELECT iduser, idsong FROM triplets WHERE iduser = '" (:iduser item) "'
                                                                     AND number = (SELECT max(number) FROM triplets WHERE iduser = '" (:iduser item) "') LIMIT 1")])
                                             y (assoc (first results) :similarity (:similarity item))]]
                   y)]
   (reverse (sort-by :score (distinct (for [i let-list :let [z (assoc i :score (* (:similarity i) ((frequencies let-list) i)))]]
                                        z))))))
+
+
+(defn recommended-songs2
+  "Creates a list of songs recommended for the user"
+  [user-list]
+  (let [results (sql/query db [(str "SELECT iduser, idsong FROM triplets WHERE iduser IN ('" (clojure.string/join "', '" (map :iduser user-list)) "') GROUP BY iduser ORDER BY MAX(number) DESC")])
+        let-list (for [item user-list :let [x (filter #(= (:iduser %) (:iduser item)) results)
+                                            y (assoc (first x) :similarity (:similarity item))]]
+                  y)]
+  (reverse (sort-by :score (distinct (for [i let-list :let [z (assoc i :score (* (:similarity i) ((frequencies let-list) i)))]]
+                                       z))))))
+
 
 
 (defn list-similar-users
