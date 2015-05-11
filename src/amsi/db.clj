@@ -26,15 +26,25 @@
   [^double num1 ^double num2]
   (Math/abs (- num1 num2)))
 
+;;check-similarity-recordset1
+(defn user1-data
+  "check-similarity data query for user1"
+  [user1]
+  (sql/query db ["SELECT * FROM triplets WHERE iduser like ?" user1]))
+
+;;check-similarity-recordset2
+(defn user2-data
+  "check-similarity data query for user2"
+  [user1 user2]
+  (sql/query db [(str "SELECT * FROM triplets WHERE idsong
+                        IN (SELECT idsong FROM triplets WHERE iduser like '" user1 "')
+                        AND iduser = '" user2 "'")]))
+
 
 (defn check-similarity
   "Returns a similarity quoeficient between two users"
-  [user1 user2]
-  (let [resultset1 (sql/query db ["SELECT * FROM triplets WHERE iduser like ?" user1])
-        resultset2 (sql/query db [(str "SELECT * FROM triplets WHERE idsong
-                        IN (SELECT idsong FROM triplets WHERE iduser like '" user1 "')
-                        AND iduser = '" user2 "'")])
-        let-list (for [item2 resultset1 :let [y (for [item1 resultset2 :let [z (sub-primitives (:norm item2) (:norm item1))]
+  [resultset1 resultset2]
+  (let [let-list (for [item2 resultset1 :let [y (for [item1 resultset2 :let [z (sub-primitives (:norm item2) (:norm item1))]
                                                                        :when (= (item2 :idsong) (item1 :idsong))]
                                                   z)]]
                    y)]
@@ -54,11 +64,20 @@
                                        z))))))
 
 
+;;Function to be passed as the second input parameter to the recommended-songs2
+;;Known for query result issues
+(defn recommended-recordset
+  "Recordset for the recommended-songs2 function"
+  [user-list]
+  (sql/query db [(str "SELECT iduser, idsong FROM triplets WHERE iduser IN ('"
+                      (clojure.string/join "', '" (map :iduser user-list))
+                      "') GROUP BY iduser ORDER BY MAX(number) DESC")]))
+
+
 (defn recommended-songs2
   "Creates a list of songs recommended for the user"
-  [user-list]
-  (let [results (sql/query db [(str "SELECT iduser, idsong FROM triplets WHERE iduser IN ('" (clojure.string/join "', '" (map :iduser user-list)) "') GROUP BY iduser ORDER BY MAX(number) DESC")])
-        let-list (for [item user-list :let [x (filter #(= (:iduser %) (:iduser item)) results)
+  [user-list results]
+  (let [let-list (for [item user-list :let [x (filter #(= (:iduser %) (:iduser item)) results)
                                             y (assoc (first x) :similarity (:similarity item))]]
                   y)]
   (reverse (sort-by :score (distinct (for [i let-list :let [z (assoc i :score (* (:similarity i) ((frequencies let-list) i)))]]
@@ -75,5 +94,5 @@
                          FROM triplets
                          WHERE idsong IN (SELECT idsong FROM triplets WHERE iduser like '" iduser "')
                          AND iduser NOT LIKE '" iduser "' GROUP BY iduser ORDER BY expr DESC LIMIT 10")])]
-    (for [x results :let [y (assoc x :similarity (check-similarity iduser (:iduser x)))]]
+    (for [x results :let [y (assoc x :similarity (check-similarity (user1-data iduser) (user2-data iduser (:iduser x))))]]
       y)))
