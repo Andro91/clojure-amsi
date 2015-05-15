@@ -3,15 +3,29 @@
             [hiccup.page :as hic-p]
             [criterium.core :as crit-core]
             [midje.sweet :as sweet]
-            [amsi.db :as db]))
+            [amsi.db :as db]
+            [korma.core :as kormacore]))
 
 (def dbs
   {:classname   "org.sqlite.JDBC"
    :subprotocol "sqlite"
-   :subname     "clojure.db"
-   })
+   :subname     "clojure.db"})
 
 
+(defdb mydb {:classname "org.sqlite.JDBC"
+                    :subprotocol "sqlite"
+                    :subname     "clojure.db"})
+
+
+(declare triplets)
+
+(kormacore/defentity triplets)
+
+(kormacore/select triplets (kormacore/fields :iduser :idsong :number)
+                  (kormacore/where {:iduser [in (map :iduser user-recordset)]})
+                  (kormacore/order (max :number) :ASC)
+                  (kormacore/group :iduser)
+                  )
 
 ;;Execution time mean : 6.106240 ns
 ;;   Execution time std-deviation : 0.011833 ns

@@ -48,3 +48,7 @@ The app can then be viewed on http://localhost:3000/
 Project profiling data (tool used - jvisualvm)
 
 ![alt tag](http://s15.postimg.org/9yz9ytkff/profiling.png)
+
+
+Query results from SQLLite studio
+![alt tag](http://s15.postimg.org/on27zwuii/query.jpg)
