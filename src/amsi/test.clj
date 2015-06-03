@@ -4,28 +4,15 @@
             [criterium.core :as crit-core]
             [midje.sweet :as sweet]
             [amsi.db :as db]
-            [korma.core :as kormacore]))
+            [korma.core :as kormacore]
+            [korma.db :as kormadb]
+            [datomic.api :only (db q) :as d]
+            [clojure.java.jdbc :as sql]))
 
 (def dbs
   {:classname   "org.sqlite.JDBC"
    :subprotocol "sqlite"
    :subname     "clojure.db"})
-
-
-(defdb mydb {:classname "org.sqlite.JDBC"
-                    :subprotocol "sqlite"
-                    :subname     "clojure.db"})
-
-
-(declare triplets)
-
-(kormacore/defentity triplets)
-
-(kormacore/select triplets (kormacore/fields :iduser :idsong :number)
-                  (kormacore/where {:iduser [in (map :iduser user-recordset)]})
-                  (kormacore/order (max :number) :ASC)
-                  (kormacore/group :iduser)
-                  )
 
 ;;Execution time mean : 6.106240 ns
 ;;   Execution time std-deviation : 0.011833 ns
@@ -50,17 +37,148 @@
 ;;(crit-core/bench (db/recommended-songs (db/list-similar-users "fd50c4007b68a3737fe052d5a4f78ce8aa117f3d")))
 
 
+;;Execution time mean : 1.796394 ms
+;;    Execution time std-deviation : 66.240417 µs
+;;   Execution time lower quantile : 1.768789 ms ( 2.5%)
+;;   Execution time upper quantile : 1.840001 ms (97.5%)
+;;                   Overhead used : 1.912597 ns
+;;(crit-core/bench (db/recommended-songs2 (db/list-similar-users "fd50c4007b68a3737fe052d5a4f78ce8aa117f3d") (db/recommended-recordset (db/list-similar-users "fd50c4007b68a3737fe052d5a4f78ce8aa117f3d"))))
 
-;;OPTIMIZATION PROBLEM
-;;The function to generate the query string
-;;(str "SELECT iduser, idsong FROM triplets WHERE iduser IN ('" (clojure.string/join "', '"
-;; (map :iduser (db/list-similar-users "fd50c4007b68a3737fe052d5a4f78ce8aa117f3d"))) "') GROUP BY iduser ORDER BY MAX(number) DESC")
+
+;;def iduser "fd50c4007b68a3737fe052d5a4f78ce8aa117f3d")
+
+;;(defn somert [sum cnt]
+;;    ; If count reaches 0 then exit the loop and return sum
+;;    (if (= (count cnt) 0)
+;;    sum
+;;    ; Otherwise add count to sum, decrease count and
+;;    ; use recur to feed the new values back into the loop
+;;    (recur (conj sum (assoc (first cnt) :similarity (db/check-similarity (db/user1-data iduser) (db/user2-data iduser (:iduser (first cnt)))))) (rest cnt))))
 
 
-;;Query execution
-;;(sql/query dbs (str "SELECT iduser, idsong, MAX(number) FROM triplets WHERE iduser IN ('" (clojure.string/join "', '"
-;;  (map :iduser (db/list-similar-users "fd50c4007b68a3737fe052d5a4f78ce8aa117f3d"))) "') GROUP BY iduser"))
 
+;;(time (filter #(= (:iduser %) (:iduser {:iduser "14d4743dd152529292dbbb4eac9273bdcf55630c"})) database))
+
+
+
+;;(def database 3)
+;;(def database (sql/query dbs ["SELECT * FROM triplets"]))
+;;(def onehunid (sql/query dbs ["SELECT * FROM triplets limit 100"]))
+
+
+;;(defn user1-data
+;;  "check-similarity data query for user1"
+;;  [user1]
+;;  (filter #(= (:iduser %) user1) database))
+
+;;(defn user1-data
+;;  "check-similarity data query for user1"
+;;  [user1]
+;;  (d/q '[:find ?song
+;;       :in $ ?name
+;;       :where [?e :user/id ?name]
+;;              [?e :user/song ?song]]
+;;     (d/db (d/connect uri)) user1))
+
+;;(map :idsong (user1-data "8808c596872da94c7efdc32afd51c73800da0b55"))
+
+
+;;(some #(= "SOEGIYH12A6D4FC0E3" %) (map :idsong (user1-data "14d4743dd152529292dbbb4eac9273bdcf55630c")))
+
+;;(defn u2d-helper
+;;  [f u]
+;;  (some #(= (:idsong f) %) (map :idsong (user1-data u)))
+;;  )
+
+;;(defn user2-data
+;;  "check-similarity data query for user2"
+;;  [user1 user2]
+;;  (filter #(u2d-helper % user1) (filter #(= (:iduser %) user2) database)))
+
+(defn initialize-datomic
+  []
+  (def uri "datomic:mem://localhost:4334/clojure")
+  (d/delete-database uri)
+  (d/create-database uri)
+  (def conn (d/connect uri))
+  (def schema-tx (read-string (slurp "resources/schema.edn")))
+  @(d/transact conn schema-tx)
+  (def db (d/db conn))
+)
+
+(defn user2-helper
+  [user1]
+(d/q '[:find [?song ...]
+       :in $ ?name
+       :where [?e :user/id ?name]
+              [?e :user/song ?song]]
+     (d/db (d/connect uri)) user1))
+
+(defn user1-data-datom
+  "check-similarity data query for user1"
+  [user1]
+  (d/q '[:find ?song ?norm
+       :in $ ?name
+       :where [?e :user/id ?name]
+              [?e :user/song ?song]
+              [?e :user/norm ?norm]]
+     (d/db (d/connect uri)) user1))
+
+
+(defn user2-data-datom
+  "check-similarity data query for user2"
+  [user1 user2]
+  (d/q '[:find ?name ?song ?number ?norm
+       :in $ [?song ...] ?name
+       :where [?e :user/song ?song]
+              [?e :user/id ?name]
+              [?e :user/number ?number]
+              [?e :user/norm ?norm]
+              ]
+     (d/db (d/connect uri)) (user2-helper user1) user2))
+
+(defn check-similarity-datom
+  "Returns a similarity quoeficient between two users"
+  [resultset1 resultset2]
+  (let [let-list (for [item2 resultset1 :let [y (for [item1 resultset2 :let [z (db/sub-primitives (nth item2 1) (nth item1 3))]
+                                                                       :when (= (first item2) (nth item1 1))]
+                                                  z)]]
+                   y)]
+  (if (pos? (count let-list))
+      (/ 1 (inc (/ (reduce + (flatten let-list)) (count let-list))))
+      0)))
+
+;;(check-similarity-datom
+;; (user1-data-datom "b4cacb67298373df24d03e0fe7c152e0ab3ff340")
+;; (user2-data-datom "b4cacb67298373df24d03e0fe7c152e0ab3ff340" "195fdee0cdcb496fbd18a26f3290ea64aff54418"))
+
+ ;;(time (db/recommended-songs (list-similar-users "8808c596872da94c7efdc32afd51c73800da0b55")))
+
+;; (time (db/recommended-songs (db/list-similar-users "8808c596872da94c7efdc32afd51c73800da0b55")))
+
+;;(time (d/q '[:find ?name ?song
+;;       :in $ [?song ...] ?name
+;;       :where [?e :user/song ?song]
+;;              [?e :user/id ?name]
+;;              ]
+;;     (d/db (d/connect uri)) '("SOUCHPA12AB0184B1A" "SOHXWSB12A6D4F7820") "8808c596872da94c7efdc32afd51c73800da0b55"))
+
+
+;;(sql/query dbs ["select * from triplets LIMIT 1000"])
+
+;;(count (d/q '[:find ?id
+;;       :where [?e :user/id ?id]
+;;              [?e :user/song ?song]]
+;;      (d/db (d/connect uri))))
+
+;;(count database)
+
+;;(def coll (take 1400 (iterate inc 0)))
+
+;;(for
+;; [item coll]
+;;; (map #(d/transact conn [{:db/id (d/tempid :db.part/user) :user/id (:iduser %) :user/song (:idsong %) :user/number (:number %) :user/norm (:norm %)}])
+;; (sql/query dbs [(str "SELECT * FROM triplets limit 1000 offset " (* item 1000))])))
 
 
 ;;A test used to test the testing package. Just for testing purposes. Testing 1 2 3, test, test.

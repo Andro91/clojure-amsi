@@ -1,5 +1,6 @@
 (ns amsi.views
   (:require [amsi.db :as db]
+            [amsi.test :as atest]
             [clojure.string :as str]
             [hiccup.page :as hic-p]))
 
@@ -88,6 +89,21 @@
       (for [loc all-locs]
         [:tr [:td (:iduser loc)] [:td (:idsong loc)] [:td (:number loc)] [:td (:norm loc)]])]])))
 
+(defn all-users-page-datom
+  "Genearates the content for the all users view page"
+  []
+  (let [all-locs (atest/list-users)]
+    (hic-p/html5
+     (gen-page-head "Users")
+     navbar
+     [:div {:class "container"}
+     [:h1 "All Users"]
+     [:table {:class "table"}
+      [:tr [:th "user"] [:th "song"] [:th "number of time listened"] [:th "normalization"]]
+      (for [loc all-locs]
+        [:tr [:td (first loc)] [:td (nth loc 1)] [:td ] [:td ]])]])))
+
+(all-users-page-datom)
 
 (defn list-user-songs-HTML
   [users]
@@ -123,9 +139,10 @@
 (defn list-user-songs
   "Returns an HTML table, populated with songs listened to by the input user"
   [iduser]
-  (let [results (db/select-specific-user (iduser :iduser))
-        my-list (db/list-similar-users (iduser :iduser))]
+  (let [;;results (db/select-specific-user (iduser :iduser))
+        my-list (time (db/list-similar-users (iduser :iduser)))
+        data (time (db/recommended-recordset2 my-list))]
     (str
-     (list-user-songs-HTML results)
-     (list-similar-users-HTML my-list)
-     (recommended-songs-HTML (db/recommended-songs my-list)))))
+     ;;(time (list-user-songs-HTML results))
+     ;;(time (list-similar-users-HTML my-list))
+     (time (recommended-songs-HTML (db/recommended-songs2 my-list data))))))

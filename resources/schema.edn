@@ -1,0 +1,31 @@
+[
+;; ----- Triplet type -----
+{:db/id #db/id[:db.part/db]
+    :db/ident :user/id
+    :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/index true
+    :db/doc "A users id"
+    :db.install/_attribute :db.part/db}
+
+{:db/id #db/id[:db.part/db]
+    :db/ident :user/song
+    :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/doc "A users song"
+    :db.install/_attribute :db.part/db}
+
+{:db/id #db/id[:db.part/db]
+    :db/ident :user/number
+    :db/valueType :db.type/long
+    :db/cardinality :db.cardinality/one
+    :db/doc "Number of listen times"
+    :db.install/_attribute :db.part/db}
+
+{:db/id #db/id[:db.part/db]
+    :db/ident :user/norm
+    :db/valueType :db.type/double
+    :db/cardinality :db.cardinality/one
+    :db/doc "Rating normalization"
+    :db.install/_attribute :db.part/db}
+]

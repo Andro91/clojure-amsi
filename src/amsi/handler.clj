@@ -12,6 +12,9 @@
   (GET "/all-users"
        []
        (views/all-users-page))
+  (GET "/all-users-datom"
+       []
+       (views/all-users-page-datom))
   (GET "/select-user"
        []
        (views/select-user-page))

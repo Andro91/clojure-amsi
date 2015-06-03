@@ -51,4 +51,4 @@ Project profiling data (tool used - jvisualvm)
 
 
 Query results from SQLLite studio
-![alt tag](http://s15.postimg.org/on27zwuii/query.jpg)
+![alt tag](http://oi61.tinypic.com/1zw0y0o.jpg)
