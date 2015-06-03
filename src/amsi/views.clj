@@ -103,7 +103,7 @@
       (for [loc all-locs]
         [:tr [:td (first loc)] [:td (nth loc 1)] [:td ] [:td ]])]])))
 
-(all-users-page-datom)
+;;(all-users-page-datom)
 
 (defn list-user-songs-HTML
   [users]
@@ -139,10 +139,11 @@
 (defn list-user-songs
   "Returns an HTML table, populated with songs listened to by the input user"
   [iduser]
-  (let [;;results (db/select-specific-user (iduser :iduser))
+  (let [results (db/select-specific-user (iduser :iduser))
         my-list (time (db/list-similar-users (iduser :iduser)))
-        data (time (db/recommended-recordset2 my-list))]
+        ;;data (time (db/recommended-recordset my-list))
+        ]
     (str
-     ;;(time (list-user-songs-HTML results))
+     (time (list-user-songs-HTML results))
      ;;(time (list-similar-users-HTML my-list))
-     (time (recommended-songs-HTML (db/recommended-songs2 my-list data))))))
+     (time (recommended-songs-HTML (db/recommended-songs my-list))))))

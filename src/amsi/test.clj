@@ -101,10 +101,63 @@
   (d/delete-database uri)
   (d/create-database uri)
   (def conn (d/connect uri))
-  (def schema-tx (read-string (slurp "resources/schema.edn")))
-  @(d/transact conn schema-tx)
-  (def db (d/db conn))
-)
+  (def schema (load-file "resources/schema.edn"))
+  (d/transact conn schema)
+  conn)
+
+;;(initialize-datomic)
+;;(def coll (take 1400 (iterate inc 0)))
+
+;;(doseq
+;; [item coll]
+;; (do
+;; (prn item)
+;; (map #(d/transact conn [{:db/id (d/tempid :db.part/user) :user/id (:iduser %) :user/song (:idsong %) :user/number (:number %) :user/norm (:norm %)}])
+;; (sql/query dbs [(str "SELECT * FROM triplets limit 1000 offset " (* item 1000))]))))
+
+;;(d/q '[:find (count ?e)
+   ;;    :where [?e :user/id ?id]
+ ;;             [?e :user/song ?song]]
+     ;; (d/db (d/connect uri)))
+
+(defn add-post-to-datomic [userid, song, n, no]
+  @(d/transact conn [{:db/id (d/tempid :db.part/user)
+                     :user/id userid
+                     :user/song song
+                     :user/number n
+                     :user/norm no }]))
+
+(defn list-users
+  "Returns a list of all the users from the database (limited to 1000 for the sake of faster processing)"
+  []
+  (def uri "datomic:mem://localhost:4334/clojure")
+  (d/delete-database uri)
+  (d/create-database uri)
+  (def conn (d/connect uri))
+  (def schema (load-file "resources/schema.edn"))
+  (d/transact conn schema)
+  (let [result (sql/query dbs ["SELECT * FROM triplets"])]
+    (doseq [item result]
+    (add-post-to-datomic (:iduser item) (:idsong item) (:number item) (:norm item))
+    ))
+  (d/q '[:find ?id ?song
+       :where [?e :user/id ?id]
+              [?e :user/song ?song]]
+      (d/db conn)))
+
+;;(d/q '[:find (count ?e)
+;;       :where [?e :user/id ?id]
+;;              [?e :user/song ?song]]
+;;;      (d/db conn))
+
+
+;;(def item (first (sql/query dbs ["SELECT * FROM triplets limit 10"])))
+;;(add-post-to-datomic (:iduser item) (:idsong item) (:number item) (:norm item))
+;;@(d/transact conn [{:db/id (d/tempid :db.part/user) :user/id "sss" :user/song "ss" :user/number 22 :user/norm 22.0}])
+;;(map #(d/transact conn [{:db/id (d/tempid :db.part/user) :user/id (:iduser %) :user/song (:idsong %) :user/number (:number %) :user/norm (:norm %)}])
+;;(sql/query dbs ["SELECT * FROM triplets limit 1000"]))
+
+;;(list-users)
 
 (defn user2-helper
   [user1]
@@ -163,13 +216,22 @@
 ;;              ]
 ;;     (d/db (d/connect uri)) '("SOUCHPA12AB0184B1A" "SOHXWSB12A6D4F7820") "8808c596872da94c7efdc32afd51c73800da0b55"))
 
+(defn recommended-songs-datom
+  "Creates a list of songs recommended for the user"
+  [user-list results]
+  (let [let-list (for [item user-list :let [x (filter #(= (:iduser %) (first item)) results)
+                                            y (conj (first x) (nth item 3))]]
+                  y)]
+  (distinct (for [i let-list :let [z (conj i (* (:similarity i) ((frequencies let-list) i)))]]
+                                       z))))
+
 
 ;;(sql/query dbs ["select * from triplets LIMIT 1000"])
 
-;;(count (d/q '[:find ?id
-;;       :where [?e :user/id ?id]
-;;              [?e :user/song ?song]]
-;;      (d/db (d/connect uri))))
+;;(d/q '[:find ?id
+;;      :where [?e :user/id ?id]
+;;             [?e :user/song ?song]]
+;;     (d/db (d/connect uri)))
 
 ;;(count database)
 

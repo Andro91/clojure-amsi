@@ -2,7 +2,8 @@
   (:require [clojure.java.jdbc :as sql]
             [hiccup.page :as hic-p]
             [korma.core :as kormacore]
-            [korma.db :as kormadb]))
+            [korma.db :as kormadb]
+            [datomic.api :only (db q) :as d]))
 
 
 (def db
@@ -10,6 +11,31 @@
    :subprotocol "sqlite"
    :subname     "clojure.db"})
 
+(defn initialize-datomic
+  []
+  (def uri "datomic:mem://localhost:4334/clojure")
+  (d/delete-database uri)
+  (d/create-database uri)
+  (def conn (d/connect uri))
+  (def schema (load-file "resources/schema.edn"))
+  (d/transact conn schema)
+  conn)
+
+(defn add-post-to-datomic [userid, song, n, no]
+  @(d/transact conn [{:db/id (d/tempid :db.part/user)
+                     :user/id userid
+                     :user/song song
+                     :user/number n
+                     :user/norm no }]))
+(defn seed
+  []
+    (let [result (sql/query db ["SELECT * FROM triplets limit 200000"])]
+    (doseq [item result]
+    (add-post-to-datomic (:iduser item) (:idsong item) (:number item) (:norm item))
+    )))
+
+(initialize-datomic)
+(seed)
 
 (defn list-users
   "Returns a list of all the users from the database (limited to 1000 for the sake of faster processing)"
@@ -66,8 +92,6 @@
                                        z))))))
 
 
-;;Function to be passed as the second input parameter to the recommended-songs2
-;;Known for query result issues
 (defn recommended-recordset
   "Recordset for the recommended-songs2 function"
   [user-list]
@@ -90,34 +114,28 @@
 (defn recommended-songs2
   "Creates a list of songs recommended for the user"
   [user-list results]
-  (let [let-list (for [item user-list :let [x (filter #(= (:iduser %) (:iduser item)) results)
-                                            y (assoc (first x) :similarity (:similarity item))]]
+  (let [let-list (for [item user-list :let [x (filter #(= (:iduser %) (first item)) results)
+                                            y (conj (first x) (nth item 3))]]
                   y)]
   (reverse (sort-by :score (distinct (for [i let-list :let [z (assoc i :score (* (:similarity i) ((frequencies let-list) i)))]]
                                        z))))))
 
-(defn list-similar-users
-  "Returns users similar to the input user, based on the number of occurences of a song being heard by both users"
-  [iduser]
-  (let [results
-        (sql/query db
-                   [(str "SELECT DISTINCT iduser, count(idsong) as expr
-                         FROM triplets
-                         WHERE idsong IN (SELECT idsong FROM triplets WHERE iduser like '" iduser "')
-                         AND iduser NOT LIKE '" iduser "' GROUP BY iduser ORDER BY expr DESC LIMIT 10")])]
-    (for [x results :let [y (assoc x :similarity (check-similarity-datom (user1-data-datom iduser) (user2-data-datom iduser (:iduser x))))]]
-       y)))
+(defn recommended-songs-datom
+  "Creates a list of songs recommended for the user"
+  [user-list results]
+  (let [let-list (for [item user-list :let [x (filter #(= (:iduser %) (first item)) results)
+                                            y (conj (first x) (nth item 3))]]
+                  y)]
+  (distinct (for [i let-list :let [z (conj i (* (:similarity i) ((frequencies let-list) i)))]]
+                                       z))))
 
-(defn initialize-datomic
-  []
-  (def uri "datomic:mem://localhost:4334/clojure")
-  (d/delete-database uri)
-  (d/create-database uri)
-  (def conn (d/connect uri))
-  (def schema-tx (read-string (slurp "resources/schema.edn")))
-  @(d/transact conn schema-tx)
-  (def db (d/db conn))
-)
+
+ ;; (def uri "datomic:mem://localhost:4334/clojure")
+ ;; (d/delete-database uri)
+ ;; (d/create-database uri)
+ ;; (def conn (d/connect uri))
+  ;;(def schema-tx (read-string (slurp "resources/schema.edn")))
+  ;;@(d/transact conn schema-tx)
 
 (defn user2-helper
   [user1]
@@ -154,10 +172,24 @@
 (defn check-similarity-datom
   "Returns a similarity quoeficient between two users"
   [resultset1 resultset2]
-  (let [let-list (for [item2 resultset1 :let [y (for [item1 resultset2 :let [z (db/sub-primitives (nth item2 1) (nth item1 3))]
+  (let [let-list (for [item2 resultset1 :let [y (for [item1 resultset2 :let [z (sub-primitives (nth item2 1) (nth item1 3))]
                                                                        :when (= (first item2) (nth item1 1))]
                                                   z)]]
                    y)]
   (if (pos? (count let-list))
       (/ 1 (inc (/ (reduce + (flatten let-list)) (count let-list))))
       0)))
+
+;;(list-similar-users "8808c596872da94c7efdc32afd51c73800da0b55")
+
+(defn list-similar-users
+  "Returns users similar to the input user, based on the number of occurences of a song being heard by both users"
+  [iduser]
+  (let [results
+        (sql/query db
+                   [(str "SELECT DISTINCT iduser, count(idsong) as expr
+                         FROM triplets
+                         WHERE idsong IN (SELECT idsong FROM triplets WHERE iduser like '" iduser "')
+                         AND iduser NOT LIKE '" iduser "' GROUP BY iduser ORDER BY expr DESC LIMIT 10")])]
+    (for [x results :let [y (assoc x :similarity (check-similarity-datom (user1-data-datom iduser) (user2-data-datom iduser (:iduser x))))]]
+       y)))
